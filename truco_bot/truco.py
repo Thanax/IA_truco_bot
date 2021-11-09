@@ -212,18 +212,17 @@ def card_choice(hand,oponent_card):
             
             return str(card_choice)
         
-        for i in (0,len(hand)-1):
+        for i in (0,len(hand)-1): #sino busca 
             #print(df_cards["P_derrotar"].iloc[first_card].iloc[0])
             #print(df_cards["P_derrotar"].iloc[hand[i]])
             #SI la peor carta de mi mano le gana a
-            if df_cards["P_derrotar"].iloc[first_card].iloc[0]<=df_cards["P_derrotar"].iloc[hand[i]] anddf_cards["P_derrotar"].iloc[hand[i]]==p_derrotar_worst: 
+            if df_cards["P_derrotar"].iloc[first_card].iloc[0]<=df_cards["P_derrotar"].iloc[hand[i]]: 
                 
                 card_choice=i+1
                 print("bot juega "+str(card_choice))
                 return str(card_choice)
             else:
-                
-                        card_choice=i+1
+                card_choice=hand.index(worst_card)+1
                 print("bot juega "+str(card_choice))
                 return str(card_choice)
         print("bot juega "+str(card_choice))
