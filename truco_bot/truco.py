@@ -540,6 +540,7 @@ def envido(soymano, tanto, mano):
 def carta_del_oponente():
     global ManoMIA
     
+    print("mano del CPU")
     print (ManoMIA.listar_cartas())
     
     while True:
@@ -789,18 +790,20 @@ def truco_utilidad():
             
     elif manos[1] == None:
         if jugador_cartademas == True:
-            if manos[0] == True and ((Carta(cartas_tiradas_CPU[1]).jerarquizar() >= 9) or (Carta(ManoCPU.decir_cartas()[0]).jerarquizar() >= 9)) :
-                return True
-            elif manos[0] == False:
-                if (cartas_tiradas_CPU[1].jerarquizar() + Carta(ManoCPU.decir_cartas()[0]).jerarquizar()) >= 18:
+            try:
+                if manos[0] == True and ((Carta(cartas_tiradas_CPU[1]).jerarquizar() >= 9) or (Carta(ManoCPU.decir_cartas()[0]).jerarquizar() >= 9)) :
                     return True
+                elif manos[0] == False:
+                    if (cartas_tiradas_CPU[1].jerarquizar() + Carta(ManoCPU.decir_cartas()[0]).jerarquizar()) >= 18:
+                        return True
+                    else:
+                        return False
                 else:
-                    return False
-            else:
-                if Carta(cartas_tiradas_CPU[1]).jerarquizar() >= 9:
-                    return True
-                else:
-                    return False
+                    if Carta(cartas_tiradas_CPU[1]).jerarquizar() >= 9:
+                        return True
+                    else:
+                        return False
+            except: return False
         elif jugador_cartademas == None or jugador_cartademas == False:
             if manos[0] == True and ((Carta(ManoCPU.decir_cartas()[0]).jerarquizar() >= 9) or (Carta(ManoCPU.decir_cartas()[1]).jerarquizar() >= 9)):
                 return True
