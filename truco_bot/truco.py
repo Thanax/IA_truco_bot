@@ -55,11 +55,14 @@ all_bot_hands=[]
 all_oponent_hands=[]
 n_round_id=0
 n_hands_played=0
+round_envido_pg=0
 
 df_cards=pd.read_csv('cartas_truco.csv')
 df_envido = pd.read_csv('envido_truco.csv')
 
 #################------JUEGO
+
+
 
 def get_cards_id(hand):
     global df_cards
@@ -89,40 +92,69 @@ def show_hand_table(cards_ids):
     global df_cards
     print(df_cards.iloc[cards_ids])
 
-def envido_choice(envido_hand):
-    global Mano_Quien
-    global df_envido
+#suma_envido
+def envido_choice(hand):
+    
+    from cartaymano import suma_envido
+    global Mano_Quien, df_envido, df_cards,round_envido_pg,n_round_id
     soy_mano=False
-    if Mano_Quien==1: 
-        soy_mano =True
-        pie=2
-        mano=1
-    else:
-        pie=1
-        mano=2
-    if True: return 'n'
-    if envido_hand[1]: #Si tiene envido se fija las probabilidades de ganar con las cartas que tiene
-        p_ganar=df_envido[(df_envido["Envido_low"]<=envido_hand[0]) & (df_envido["Envido_high"]>=envido_hand[0]) & (df_envido["Mano"]==soy_mano)]["P_ganar"].iloc[0]
-        if p_ganar>=0.5: 
-            print('si')
+    #print(envido_hand)
+    if Mano_Quien==1:  soy_mano =True
+    risk=0.5
+    envido_hand = df_cards["carta"].iloc[hand[0]]
+    #print(hand)
+    if n_round_id>0: 
+        p_ganar=round_envido_pg
+        #print(p_ganar)
+        
+        if p_ganar>=risk: #Si tiene envido se fija las probabilidades de ganar con las cartas que tiene
+            print('truco_bot quiere')
             return 's'
         else: 
-            print('no')
+            print('truco_bot no quiere')
             return 'n'
+    if df_cards["id_palo"].iloc[hand[0]] == df_cards["id_palo"].iloc[hand[1]]: #compara los palos de la carta 1 y 2
+        if df_cards["id_palo"].iloc[hand[0]] == df_cards["id_palo"].iloc[hand[2]]: #tiene "flor", por lo que es necesario calcular el mejor embido de entre las 3 cartas
+            env_1=suma_envido(df_cards["carta"].iloc[hand[0]],df_cards["carta"].iloc[hand[1]])
+            env_2=suma_envido(df_cards["carta"].iloc[hand[1]],df_cards["carta"].iloc[hand[2]])
+            env_3=suma_envido(df_cards["carta"].iloc[hand[0]],df_cards["carta"].iloc[hand[2]])
+            if env_1>envido_hand: envido_hand=env_1 #compara la mejor posibilidad"
+            if env_2>envido_hand: envido_hand=env_2
+            if env_3>envido_hand: envido_hand=env_3
+            
+        else: #no son iguales los palos de la carta 1, 2 y 3, pero si de 1 y 2
+            envido_hand=suma_envido(df_cards["carta"].iloc[hand[0]],df_cards["carta"].iloc[hand[1]])
+    
+    else: #no son iguales los palos de la carta 1, 2 y 3, ni 1 y 2
+        if df_cards["id_palo"].iloc[hand[1]] == df_cards["id_palo"].iloc[hand[2]]:#compara los palos de la carta 2 y 3
+            envido_hand=suma_envido(df_cards["carta"].iloc[hand[1]],df_cards["carta"].iloc[hand[2]])
+        
+        elif df_cards["id_palo"].iloc[hand[0]] == df_cards["id_palo"].iloc[hand[2]]:#compara los palos de la carta 1 y 3 
+            envido_hand=suma_envido(df_cards["carta"].iloc[hand[0]],df_cards["carta"].iloc[hand[2]]) 
+    
+
+    print("truco_bot tiene "+str(envido_hand)+" de envido")
+    round_envido=envido_hand
+    p_ganar=df_envido[(df_envido["Envido_low"]<=envido_hand) & (df_envido["Envido_high"]>=envido_hand) & (df_envido["Mano"]==soy_mano)]["P_ganar"].iloc[0]
+    #print(p_ganar)
+    
+    if p_ganar>=risk: #Si tiene envido se fija las probabilidades de ganar con las cartas que tiene
+        print('truco_bot quiere')
+        return 's'
     else: 
-        print('no')
-        return "n" #si NO tiene envido rechaza
+        print('truco_bot no quiere')
+        return 'n'
     
 def truco_choice(hand):
     global df_cards
     total_p_derrotar=0.0
-    if len(hand)<1:
-        print('no')
-        return 'n'
+    #if len(hand)<1:
+        #print('no')
+        #return 'n'
     for i in (0,len(hand)-1):
-        print(i)
+        #print(i)
         total_p_derrotar+=df_cards["P_derrotar"].iloc[hand[i]]
-    if total_p_derrotar >= 150/len(hand): #si hay más de 50% de probabilidades de derrotar las cartas del oponente
+    if total_p_derrotar >= 1.5/len(hand): #si hay más de 50% de probabilidades de derrotar las cartas del oponente
         print('si')
         return 's'
     else: 
@@ -130,25 +162,35 @@ def truco_choice(hand):
         return 'n'
 
 def card_choice(hand,oponent_card):
+    
     global df_cards
+    
     best_card=0
     card_choice=0
     worst_card=0
     p_derrotar=0
+    p_derrotar_worst=0
+    
+    #identificar la mejor carta de la mano
+    for i in (0,len(hand)-1):
+        if p_derrotar<=df_cards["P_derrotar"].iloc[hand[i]]: 
+            #print(i)
+            #print('best card: '+str(best_card))
+            best_card=hand[i]
+            p_derrotar = df_cards["P_derrotar"].iloc[best_card] 
+
+    #identificar la peor
+    for i in (0,len(hand)-1):
+            #print(worst)
+            if df_cards["P_derrotar"].iloc[worst_card]>=df_cards["P_derrotar"].iloc[hand[i]]: 
+                worst_card=hand[i] 
+                p_derrotar_worst= df_cards["P_derrotar"].iloc[worst_card] 
+                
     if oponent_card==0: #si es la primera carta de la ronda
-        #print(len(hand))
-        #print(df_cards["P_derrotar"].iloc[best_card])
-        for i in (0,len(hand)-1):
-            #print(df_cards["P_derrotar"].iloc[hand[i]])
-            if p_derrotar<=df_cards["P_derrotar"].iloc[hand[i]]: 
-                #print(i)
-                #print('best card: '+str(best_card))
-                best_card=hand[i]
-                p_derrotar = df_cards["P_derrotar"].iloc[best_card]
-                card_choice=i+1
-                #print('card_choice')
+        card_choice=hand.index(best_card)+1 #conseguir la posición de la carta
         print("bot juega "+str(card_choice))
         return str(card_choice)
+    
     else: #si ya se jugó otra carta esta ronda
         oponent_card = str(oponent_card).replace('.','')
         the_card=oponent_card.split()
@@ -158,21 +200,29 @@ def card_choice(hand,oponent_card):
         the_card[0]=int(the_card[0])
         #print(the_card)
         #print(oponent_card)
-        first_card=get_cards_id([the_card])
+        first_card=get_cards_id([the_card]) #busca el id de la carta oponente
         #print(first_card)
+        
+        #SI la peor carta de mi mano le gana a su carta jugada entonces la juega
+        if df_cards["P_derrotar"].iloc[first_card].iloc[0]<=p_derrotar_worst: 
+            
+            card_choice=hand.index(worst_card)+1
+            
+            print("bot juega "+str(card_choice))
+            
+            return str(card_choice)
+        
         for i in (0,len(hand)-1):
             #print(df_cards["P_derrotar"].iloc[first_card].iloc[0])
             #print(df_cards["P_derrotar"].iloc[hand[i]])
-            if df_cards["P_derrotar"].iloc[first_card].iloc[0]<=df_cards["P_derrotar"].iloc[hand[i]]: 
-                best_card=hand[i]
+            #SI la peor carta de mi mano le gana a
+            if df_cards["P_derrotar"].iloc[first_card].iloc[0]<=df_cards["P_derrotar"].iloc[hand[i]] anddf_cards["P_derrotar"].iloc[hand[i]]==p_derrotar_worst: 
+                
                 card_choice=i+1
                 print("bot juega "+str(card_choice))
                 return str(card_choice)
             else:
-                for i in (0,len(hand)-1):
-                    #print(worst)
-                    if df_cards["P_derrotar"].iloc[worst_card]>=df_cards["P_derrotar"].iloc[hand[i]]: 
-                        worst_card=hand[i]
+                
                         card_choice=i+1
                 print("bot juega "+str(card_choice))
                 return str(card_choice)
@@ -905,7 +955,7 @@ if __name__ == '__main__':
     print('\n')
 
     if pJUG>=ACuanto:
-        print ('\n\n\n----GANASTE----\n')
+        print ('\n\n\n----GANA truco_bot----\n')
     else:
-        print ('\n\n\n----PERDISTE----\n')
+        print ('\n\n\n----PIERDE truco_bot----\n')
 
