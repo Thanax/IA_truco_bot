@@ -57,8 +57,8 @@ n_round_id=0
 n_hands_played=0
 round_envido_pg=0
 
-df_cards=pd.read_csv('cartas_truco.csv')
-df_envido = pd.read_csv('envido_truco.csv')
+df_cards=pd.read_csv('../tables/cartas_truco.csv')
+df_envido = pd.read_csv('../tables/envido_truco.csv')
 
 #################------JUEGO
 
